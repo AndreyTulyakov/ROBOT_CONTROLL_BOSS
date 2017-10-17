@@ -1,9 +1,12 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
+#include "key_press_eater.h"
+
 #include <QMainWindow>
 #include <QUdpSocket>
 #include <QNetworkDatagram>
+#include <QKeyEvent>
 #include <stdlib.h>
 
 using namespace std;
@@ -37,8 +40,11 @@ public:
     void processTheDatagram(QNetworkDatagram datagram);
     void sendData(string data);
 
+    void turnTurel(int offset);
+
 public slots:
     void readPendingDatagrams();
+    void onKeyboardPress(int key);
 
 private slots:
     void on_pushButtonInit_clicked();
@@ -47,9 +53,15 @@ private slots:
 
     void on_pushButtonDisplayText_clicked();
 
+    void on_dialTowerRotation_valueChanged(int value);
+
+//    void keyPressEvent(QKeyEvent *ev);
+//    void keyReleaseEvent(QKeyEvent *ev);
+
 private:
     Ui::MainWindow *ui;
     QUdpSocket *udpSocket;
+    KeyPressEater* filterObj;
 };
 
 #endif // MAINWINDOW_H

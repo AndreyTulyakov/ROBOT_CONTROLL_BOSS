@@ -14,8 +14,10 @@ TEMPLATE = app
 
 
 SOURCES += main.cpp\
-        mainwindow.cpp
+        mainwindow.cpp \
+    key_press_eater.cpp
 
-HEADERS  += mainwindow.h
+HEADERS  += mainwindow.h \
+    key_press_eater.h
 
 FORMS    += mainwindow.ui
