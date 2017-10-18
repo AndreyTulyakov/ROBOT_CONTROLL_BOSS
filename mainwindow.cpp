@@ -16,7 +16,7 @@ MainWindow::MainWindow(QWidget *parent) :
     memset(key_states, false, KEY_CODES_COUNT);
 
     connect(&keyboard_timer, SIGNAL(timeout()), this, SLOT(onKeyboardTimer()));
-    keyboard_timer.start(60);
+    keyboard_timer.start(KEYBOARD_TIMER_INTERVAL_MS);
 
     filterObj = new KeyPressEater(this);
     this->installEventFilter(filterObj);
@@ -24,7 +24,7 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(filterObj, SIGNAL(signalKeyRelease(int)), this, SLOT(onKeyboardRelease(int)));
     initSocket();
 
-    tower_rotation = 90;
+    tower_rotation = 127;
     turnTurel(0);
     left_drive_power = 0;
     right_drive_power = 0;
@@ -66,11 +66,14 @@ void MainWindow::sendData(size_t bytes_count)
 
 void MainWindow::turnTurel(int offset)
 {
+    int minimal_angle = 127-SIGNLE_SIDE_TURN_RANGE;
+    int maximal_angle = 127+SIGNLE_SIDE_TURN_RANGE;
+
     int rotation = (int)tower_rotation + offset;
-    if(rotation > 180)
-        rotation = 180;
-    if(rotation < 0)
-        rotation = 0;
+    if(rotation > maximal_angle)
+        rotation = maximal_angle;
+    if(rotation < minimal_angle)
+        rotation = minimal_angle;
 
     if( tower_rotation != (quint8)rotation) {
         tower_rotation = (quint8)rotation;

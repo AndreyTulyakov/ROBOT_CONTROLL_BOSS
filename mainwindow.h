@@ -12,6 +12,7 @@
 
 using namespace std;
 
+#define KEYBOARD_TIMER_INTERVAL_MS      50
 #define CONNECTION_PORT 7755
 #define ROBOT_COMMAND_START_KEYWORD     "!$"
 #define INIT_KEYWORD "ZBW"
@@ -28,6 +29,7 @@ using namespace std;
 #define KEY_CODES_COUNT 0xFF
 #define FRONT_DIRECTION 0b01111111
 #define BACK_DIRECTION  0b11111111
+#define SIGNLE_SIDE_TURN_RANGE  90
 
 namespace Ui {
 class MainWindow;
