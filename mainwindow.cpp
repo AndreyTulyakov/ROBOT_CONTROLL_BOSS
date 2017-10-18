@@ -24,7 +24,7 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(filterObj, SIGNAL(signalKeyRelease(int)), this, SLOT(onKeyboardRelease(int)));
     initSocket();
 
-    tower_rotation = 127;
+    tower_rotation = START_TURN_ANGLE;
     turnTurel(0);
     left_drive_power = 0;
     right_drive_power = 0;
@@ -66,10 +66,10 @@ void MainWindow::sendData(size_t bytes_count)
 
 void MainWindow::turnTurel(int offset)
 {
-    int minimal_angle = 127-SIGNLE_SIDE_TURN_RANGE;
-    int maximal_angle = 127+SIGNLE_SIDE_TURN_RANGE;
+    int minimal_angle = START_TURN_ANGLE-SIGNLE_SIDE_TURN_RANGE;
+    int maximal_angle = START_TURN_ANGLE+SIGNLE_SIDE_TURN_RANGE;
 
-    int rotation = (int)tower_rotation + offset;
+    int rotation = (int)tower_rotation - offset;
     if(rotation > maximal_angle)
         rotation = maximal_angle;
     if(rotation < minimal_angle)
@@ -165,11 +165,11 @@ void MainWindow::onKeyboardRelease(int key)
 void MainWindow::onKeyboardTimer()
 {
     if(key_states[Qt::Key_BracketLeft]) {
-        turnTurel(-1);
+        turnTurel(-2);
     }
 
     if(key_states[Qt::Key_BracketRight]) {
-        turnTurel(1);
+        turnTurel(2);
     }
 
     checkDriveKeys();

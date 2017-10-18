@@ -26,10 +26,13 @@ using namespace std;
 #define ROBOT_COMMAND_DISPLAY           0xA4
 
 #define KEY_SEND_BUFFER_SIZE 64
-#define KEY_CODES_COUNT 0xFF
+#define KEY_CODES_COUNT 0xFFF
+
+
 #define FRONT_DIRECTION 0b01111111
 #define BACK_DIRECTION  0b11111111
-#define SIGNLE_SIDE_TURN_RANGE  90
+#define SIGNLE_SIDE_TURN_RANGE  89
+#define START_TURN_ANGLE  90
 
 namespace Ui {
 class MainWindow;
