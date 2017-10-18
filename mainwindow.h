@@ -7,6 +7,7 @@
 #include <QUdpSocket>
 #include <QNetworkDatagram>
 #include <QKeyEvent>
+#include <QTimer>
 #include <stdlib.h>
 
 using namespace std;
@@ -23,6 +24,10 @@ using namespace std;
 #define ROBOT_COMMAND_GET_INFO          0xA3
 #define ROBOT_COMMAND_DISPLAY           0xA4
 
+#define KEY_SEND_BUFFER_SIZE 64
+#define KEY_CODES_COUNT 0xFF
+#define FRONT_DIRECTION 0b01111111
+#define BACK_DIRECTION  0b11111111
 
 namespace Ui {
 class MainWindow;
@@ -38,30 +43,36 @@ public:
 
     void initSocket();
     void processTheDatagram(QNetworkDatagram datagram);
-    void sendData(string data);
+    void sendData(size_t bytes_count);
 
     void turnTurel(int offset);
+    void drivePlatform(quint8 in_left_drive_power, quint8 in_right_drive_power);
+    void checkDriveKeys();
 
 public slots:
     void readPendingDatagrams();
     void onKeyboardPress(int key);
+    void onKeyboardRelease(int key);
+    void onKeyboardTimer();
 
 private slots:
     void on_pushButtonInit_clicked();
-
     void on_pushButtonDeinit_clicked();
-
     void on_pushButtonDisplayText_clicked();
-
-    void on_dialTowerRotation_valueChanged(int value);
-
-//    void keyPressEvent(QKeyEvent *ev);
-//    void keyReleaseEvent(QKeyEvent *ev);
 
 private:
     Ui::MainWindow *ui;
     QUdpSocket *udpSocket;
     KeyPressEater* filterObj;
+    QTimer keyboard_timer;
+
+    quint8 tower_rotation;
+    quint8 left_drive_power;
+    quint8 right_drive_power;
+
+    quint8* send_buffer;
+
+    bool* key_states;
 };
 
 #endif // MAINWINDOW_H

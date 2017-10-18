@@ -2,7 +2,7 @@
 #include "ui_mainwindow.h"
 #include <QDebug>
 #include <QString>
-
+#include <QMessageBox>
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -10,11 +10,25 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     ui->setupUi(this);
 
+    send_buffer = new quint8[KEY_SEND_BUFFER_SIZE];
+
+    key_states = new bool[KEY_CODES_COUNT];
+    memset(key_states, false, KEY_CODES_COUNT);
+
+    connect(&keyboard_timer, SIGNAL(timeout()), this, SLOT(onKeyboardTimer()));
+    keyboard_timer.start(60);
 
     filterObj = new KeyPressEater(this);
     this->installEventFilter(filterObj);
     connect(filterObj, SIGNAL(signalKeyPress(int)), this, SLOT(onKeyboardPress(int)));
+    connect(filterObj, SIGNAL(signalKeyRelease(int)), this, SLOT(onKeyboardRelease(int)));
     initSocket();
+
+    tower_rotation = 90;
+    turnTurel(0);
+    left_drive_power = 0;
+    right_drive_power = 0;
+
 }
 
 MainWindow::~MainWindow()
@@ -36,20 +50,91 @@ void MainWindow::processTheDatagram(QNetworkDatagram datagram)
     qDebug() << "Data:" << data;
 }
 
-void MainWindow::sendData(string data)
+void MainWindow::sendData(size_t bytes_count)
 {
-    qint64 writed_bytes = udpSocket->writeDatagram(QByteArray(data.c_str(), data.length()), QHostAddress(ui->lineRobotBodyIP->text()), ui->spinBoxRobotBodyPort->value());
-    if(writed_bytes > 0) {
-        qDebug() << "Writes good! " << writed_bytes;
-    } else {
+    QString hexstr;
+    for(size_t i=0; i < bytes_count; i++) {
+        hexstr = hexstr + " " + QString::number(send_buffer[i], 16).toUpper();
+    }
+    qDebug() << "send data: [" << hexstr.trimmed() << "]";
+
+    qint64 writed_bytes = udpSocket->writeDatagram(QByteArray((const char *)send_buffer, bytes_count), QHostAddress(ui->lineRobotBodyIP->text()), ui->spinBoxRobotBodyPort->value());
+    if(writed_bytes <= 0) {
         qDebug() << "Writes bad!!! " << writed_bytes;
     }
 }
 
 void MainWindow::turnTurel(int offset)
 {
-    int current_value = ui->dialTowerRotation->value();
-    ui->dialTowerRotation->setValue(current_value+offset);
+    int rotation = (int)tower_rotation + offset;
+    if(rotation > 180)
+        rotation = 180;
+    if(rotation < 0)
+        rotation = 0;
+
+    if( tower_rotation != (quint8)rotation) {
+        tower_rotation = (quint8)rotation;
+        ui->lcdNumberRotation->display(tower_rotation);
+
+        send_buffer[0] = ROBOT_COMMAND_START_KEYWORD[0];
+        send_buffer[1] = ROBOT_COMMAND_START_KEYWORD[1];
+        send_buffer[2] = ROBOT_COMMAND_TURN_TOWER;
+        send_buffer[3] = tower_rotation;
+        sendData(4);
+    }
+}
+
+void MainWindow::drivePlatform(quint8 in_left_drive_power, quint8 in_right_drive_power)
+{
+    if(left_drive_power != in_left_drive_power || right_drive_power != in_right_drive_power)
+    {
+        left_drive_power  = in_left_drive_power;
+        right_drive_power = in_right_drive_power;
+        ui->lcdNumberLeftMotorPower->display(left_drive_power);
+        ui->lcdNumberRightMotorPower->display(right_drive_power);
+
+        send_buffer[0] = ROBOT_COMMAND_START_KEYWORD[0];
+        send_buffer[1] = ROBOT_COMMAND_START_KEYWORD[1];
+        send_buffer[2] = ROBOT_COMMAND_DRIVE_CONTROLL;
+        send_buffer[3] = left_drive_power;
+        send_buffer[4] = right_drive_power;
+        sendData(5);
+    }
+}
+
+void MainWindow::checkDriveKeys()
+{
+    quint8 MOTORS_POWER = 0xFF;
+
+    if(key_states[Qt::Key_W] && !key_states[Qt::Key_A] && !key_states[Qt::Key_S] && !key_states[Qt::Key_D])
+    {
+        drivePlatform(MOTORS_POWER & FRONT_DIRECTION,
+                      MOTORS_POWER & FRONT_DIRECTION);
+        return;
+    }
+
+    if(!key_states[Qt::Key_W] && !key_states[Qt::Key_A] && key_states[Qt::Key_S] && !key_states[Qt::Key_D])
+    {
+        drivePlatform(MOTORS_POWER & BACK_DIRECTION,
+                      MOTORS_POWER & BACK_DIRECTION);
+        return;
+    }
+
+    if(!key_states[Qt::Key_W] && key_states[Qt::Key_A] && !key_states[Qt::Key_S] && !key_states[Qt::Key_D])
+    {
+        drivePlatform(MOTORS_POWER & BACK_DIRECTION,
+                      MOTORS_POWER & FRONT_DIRECTION);
+        return;
+    }
+
+    if(!key_states[Qt::Key_W] && !key_states[Qt::Key_A] && !key_states[Qt::Key_S] && key_states[Qt::Key_D])
+    {
+        drivePlatform(MOTORS_POWER & FRONT_DIRECTION,
+                      MOTORS_POWER & BACK_DIRECTION);
+        return;
+    }
+
+    drivePlatform(0, 0);
 }
 
 void MainWindow::readPendingDatagrams()
@@ -62,74 +147,66 @@ void MainWindow::readPendingDatagrams()
 
 void MainWindow::onKeyboardPress(int key)
 {
-    switch (key) {
-    case Qt::Key_BracketLeft:
-        turnTurel(-3);
-        break;
-    case Qt::Key_BracketRight:
-        turnTurel(3);
-        break;
+    if(key < KEY_CODES_COUNT) {
+        key_states[key] = true;
     }
+}
+
+void MainWindow::onKeyboardRelease(int key)
+{
+    if(key < KEY_CODES_COUNT) {
+        key_states[key] = false;
+    }
+}
+
+void MainWindow::onKeyboardTimer()
+{
+    if(key_states[Qt::Key_BracketLeft]) {
+        turnTurel(-1);
+    }
+
+    if(key_states[Qt::Key_BracketRight]) {
+        turnTurel(1);
+    }
+
+    checkDriveKeys();
 }
 
 void MainWindow::on_pushButtonInit_clicked()
 {
-    string command = string(ROBOT_COMMAND_START_KEYWORD) + char(ROBOT_COMMAND_INIT) + string(INIT_KEYWORD);
-    sendData(command);
+    send_buffer[0] = ROBOT_COMMAND_START_KEYWORD[0];
+    send_buffer[1] = ROBOT_COMMAND_START_KEYWORD[1];
+    send_buffer[2] = ROBOT_COMMAND_INIT;
+    send_buffer[3] = INIT_KEYWORD[0];
+    send_buffer[4] = INIT_KEYWORD[1];
+    send_buffer[5] = INIT_KEYWORD[2];
+    sendData(6);
 }
 
 void MainWindow::on_pushButtonDeinit_clicked()
 {
-    string command = string(ROBOT_COMMAND_START_KEYWORD) + char(ROBOT_COMMAND_DEINIT) + string(INIT_KEYWORD);
-    sendData(command);
+    send_buffer[0] = ROBOT_COMMAND_START_KEYWORD[0];
+    send_buffer[1] = ROBOT_COMMAND_START_KEYWORD[1];
+    send_buffer[2] = ROBOT_COMMAND_DEINIT;
+    send_buffer[3] = INIT_KEYWORD[0];
+    send_buffer[4] = INIT_KEYWORD[1];
+    send_buffer[5] = INIT_KEYWORD[2];
+    sendData(6);
 }
-
 
 void MainWindow::on_pushButtonDisplayText_clicked()
 {
-    string command = string(ROBOT_COMMAND_START_KEYWORD) + char(ROBOT_COMMAND_DISPLAY) + char(0) + char(0) + ui->lineEditTextForDisplay->text().toStdString();
-    sendData(command);
+    QString text = ui->lineEditTextForDisplay->text();
+    send_buffer[0] = ROBOT_COMMAND_START_KEYWORD[0];
+    send_buffer[1] = ROBOT_COMMAND_START_KEYWORD[1];
+    send_buffer[2] = ROBOT_COMMAND_DISPLAY;
+    send_buffer[3] = 0; // X position
+    send_buffer[4] = 0; // Y position
+    size_t counter = 5;
+    for(int i = 0; i < text.length() && i < KEY_SEND_BUFFER_SIZE-5; i++)
+    {
+        counter++;
+        send_buffer[5+i] = QChar(text[i]).toLatin1();
+    }
+    sendData(counter);
 }
-
-void MainWindow::on_dialTowerRotation_valueChanged(int value)
-{
-    qDebug() << value;
-    string command = string(ROBOT_COMMAND_START_KEYWORD) + char(ROBOT_COMMAND_TURN_TOWER) + char(value);
-    sendData(command);
-}
-
-
-//void MainWindow::keyPressEvent(QKeyEvent *event)
-//{
-//    if (event->isAutoRepeat())
-//        return;
-
-//    switch (event->key()) {
-//    case Qt::Key_BracketLeft:
-//        turnTurel(-3);
-//        event->accept();
-//        break;
-//    case Qt::Key_BracketRight:
-//        turnTurel(3);
-//        event->accept();
-//        break;
-//    default:
-//        QMainWindow::keyPressEvent(event);
-//    }
-//    qDebug() << ("You Pressed Key " + event->text()) << event->key();
-//}
-
-//void MainWindow::keyReleaseEvent(QKeyEvent *event)
-//{
-//    if (event->isAutoRepeat())
-//        return;
-
-//    switch (event->key()) {
-//    case Qt::Key_CameraFocus:
-
-//        break;
-//    default:
-//        QMainWindow::keyReleaseEvent(event);
-//    }
-//    qDebug() << ("You Release Key " + event->text()) << event->key();
-//}

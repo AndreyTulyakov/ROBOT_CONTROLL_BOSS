@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>810</width>
+    <width>695</width>
     <height>521</height>
    </rect>
   </property>
@@ -41,7 +41,7 @@
         <widget class="QLineEdit" name="lineRobotBodyIP">
          <property name="minimumSize">
           <size>
-           <width>160</width>
+           <width>120</width>
            <height>0</height>
           </size>
          </property>
@@ -69,7 +69,7 @@
           </size>
          </property>
          <property name="focusPolicy">
-          <enum>Qt::TabFocus</enum>
+          <enum>Qt::ClickFocus</enum>
          </property>
          <property name="maximum">
           <number>100000</number>
@@ -100,6 +100,9 @@
            <height>0</height>
           </size>
          </property>
+         <property name="focusPolicy">
+          <enum>Qt::ClickFocus</enum>
+         </property>
          <property name="text">
           <string>INIT</string>
          </property>
@@ -112,6 +115,9 @@
            <width>120</width>
            <height>0</height>
           </size>
+         </property>
+         <property name="focusPolicy">
+          <enum>Qt::ClickFocus</enum>
          </property>
          <property name="text">
           <string>DEINIT</string>
@@ -147,6 +153,9 @@
               <verstretch>0</verstretch>
              </sizepolicy>
             </property>
+            <property name="focusPolicy">
+             <enum>Qt::StrongFocus</enum>
+            </property>
             <property name="frameShape">
              <enum>QFrame::StyledPanel</enum>
             </property>
@@ -168,6 +177,9 @@
            <layout class="QVBoxLayout" name="verticalLayout_2">
             <item>
              <widget class="QLineEdit" name="lineEditTextForDisplay">
+              <property name="focusPolicy">
+               <enum>Qt::ClickFocus</enum>
+              </property>
               <property name="layoutDirection">
                <enum>Qt::LeftToRight</enum>
               </property>
@@ -206,70 +218,63 @@
            <property name="title">
             <string>Control panel</string>
            </property>
-           <layout class="QHBoxLayout" name="horizontalLayout_3">
-            <item>
-             <widget class="QProgressBar" name="progressBarLeftDrive">
-              <property name="maximum">
-               <number>127</number>
+           <layout class="QGridLayout" name="gridLayout">
+            <item row="1" column="2">
+             <widget class="QLCDNumber" name="lcdNumberRightMotorPower">
+              <property name="maximumSize">
+               <size>
+                <width>100</width>
+                <height>32</height>
+               </size>
               </property>
-              <property name="value">
-               <number>0</number>
+              <property name="frameShape">
+               <enum>QFrame::Box</enum>
               </property>
-              <property name="textVisible">
+              <property name="smallDecimalPoint">
                <bool>false</bool>
-              </property>
-              <property name="orientation">
-               <enum>Qt::Vertical</enum>
-              </property>
-              <property name="invertedAppearance">
-               <bool>false</bool>
-              </property>
-              <property name="textDirection">
-               <enum>QProgressBar::TopToBottom</enum>
               </property>
              </widget>
             </item>
-            <item>
-             <widget class="QDial" name="dialTowerRotation">
-              <property name="minimum">
-               <number>1</number>
-              </property>
-              <property name="maximum">
-               <number>179</number>
-              </property>
-              <property name="value">
-               <number>90</number>
-              </property>
-              <property name="orientation">
-               <enum>Qt::Horizontal</enum>
-              </property>
-              <property name="invertedAppearance">
-               <bool>false</bool>
-              </property>
-              <property name="invertedControls">
-               <bool>true</bool>
-              </property>
-              <property name="wrapping">
-               <bool>true</bool>
-              </property>
-              <property name="notchTarget">
-               <double>10.000000000000000</double>
-              </property>
-              <property name="notchesVisible">
-               <bool>true</bool>
+            <item row="1" column="0">
+             <widget class="QLCDNumber" name="lcdNumberLeftMotorPower">
+              <property name="maximumSize">
+               <size>
+                <width>100</width>
+                <height>32</height>
+               </size>
               </property>
              </widget>
             </item>
-            <item>
-             <widget class="QProgressBar" name="progressBarRightDrive">
-              <property name="maximum">
-               <number>127</number>
+            <item row="1" column="1">
+             <widget class="QLCDNumber" name="lcdNumberRotation"/>
+            </item>
+            <item row="0" column="0">
+             <widget class="QLabel" name="label_3">
+              <property name="text">
+               <string>L-DRIVE POWER</string>
               </property>
-              <property name="value">
-               <number>0</number>
+              <property name="alignment">
+               <set>Qt::AlignCenter</set>
               </property>
-              <property name="orientation">
-               <enum>Qt::Vertical</enum>
+             </widget>
+            </item>
+            <item row="0" column="2">
+             <widget class="QLabel" name="label_4">
+              <property name="text">
+               <string>R-DRIVE POWER</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignCenter</set>
+              </property>
+             </widget>
+            </item>
+            <item row="0" column="1">
+             <widget class="QLabel" name="label_5">
+              <property name="text">
+               <string>TOWER ROTATION</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignCenter</set>
               </property>
              </widget>
             </item>
